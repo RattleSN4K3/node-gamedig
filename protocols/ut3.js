@@ -1,4 +1,5 @@
 import gamespy3 from './gamespy3.js'
+import { lan as unrealengine3$lan } from './unrealengine3.js'
 
 export default class ut3 extends gamespy3 {
   async run (state) {
@@ -41,5 +42,16 @@ export default class ut3 extends gamespy3 {
     if ('custom_mutators' in state.raw) state.raw.custom_mutators = split(state.raw.custom_mutators)
     if ('stock_mutators' in state.raw) state.raw.stock_mutators = split(state.raw.stock_mutators)
     if ('map' in state.raw) state.map = state.raw.map
+  }
+}
+
+/**
+ * Implements the LAN protocol for UT3
+ */
+export class lan extends unrealengine3$lan {
+  constructor () {
+    super()
+    this.packetVersion = 5
+    this.gameUniqueId = 0x4D5707DB
   }
 }

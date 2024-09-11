@@ -73,7 +73,7 @@ matrix.splice(0, 0, headers)
 const padLeft = ' '.repeat(columnPadLeft)
 const padRight = ' '.repeat(columnPadRight)
 const lines = matrix.map(row => {
-  const values = headerMap.map((x, idx) => {
+  const values = headerMap.map((x) => {
     return padLeft + row[x].padEnd(maxLength[x], ' ') + padRight
   })
   return `${columnDelimiter}${''}${values.join(columnDelimiter)}${columnDelimiter}`
