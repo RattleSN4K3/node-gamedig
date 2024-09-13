@@ -51,6 +51,7 @@
         "dist/index.cjs",
         "bin/gamedig.js",
         "lib/",
+        "patterns/",
         "protocols/",
         "LICENSE",
         "GAMES_LIST.md",

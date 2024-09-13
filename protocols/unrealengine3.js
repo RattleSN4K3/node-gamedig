@@ -1,4 +1,5 @@
 import Core, { CoreLAN } from './core.js'
+import { GameSettingsCommon } from '../patterns/ue3pattern.js'
 
 export const PlatformType = {
   Unknown: 0,
@@ -9,19 +10,8 @@ export const PlatformType = {
   MacOSX: 32
 }
 
-/** The types of advertisement of settings to use */
-// eslint-disable-next-line no-unused-vars
-const EOnlineDataAdvertisementType = {
-  /** Don't advertise via the online service or QoS data */
-  ODAT_DontAdvertise: 0,
-  /** Advertise via the online service only */
-  ODAT_OnlineService: 1,
-  /** Advertise via the QoS data only */
-  ODAT_QoS: 2
-}
-
 /** The supported data types that can be stored in the union */
-const ESettingsDataType = {
+export const ESettingsDataType = {
   /** Means the data in the OnlineData value fields should be ignored */
   SDT_Empty: 0,
   /** 32 bit integer goes in Value1 only */
@@ -38,27 +28,6 @@ const ESettingsDataType = {
   SDT_Blob: 6,
   /** Date/time structure. Date in Value1 and time Value2 */
   SDT_DateTime: 7
-}
-
-// UT3
-const TRANSLATE_MAP = {
-  mapname: false,
-  p1073741825: 'map',
-  p1073741826: 'gametype',
-  p1073741827: 'servername',
-  p1073741828: 'custom_mutators',
-  gamemode: 'joininprogress',
-  s32779: 'gamemode',
-  s0: 'bot_skill',
-  s6: 'pure_server',
-  s7: 'password',
-  s8: 'vs_bots',
-  s10: 'force_respawn',
-  p268435704: 'frag_limit',
-  p268435705: 'time_limit',
-  p268435703: 'numbots',
-  p268435717: 'stock_mutators',
-  p1073741829: 'stock_mutators'
 }
 
 /**
@@ -365,6 +334,42 @@ export class lan extends CoreLAN {
 
     // generate unique client id
     this.clientNonce = unrealengine3.generateNonce(8)
+    // create class for translating options
+    this.settingsResolver = new GameSettingsCommon()
+
+    // UT3 properties
+    this.translateMap = {
+      mapname: false,
+      p1073741825: 'map',
+      p1073741826: 'gametype',
+      p1073741827: 'servername',
+      p1073741828: 'custom_mutators',
+      gamemode: 'joininprogress',
+      s32779: 'gamemode',
+      s0: 'bot_skill',
+      s6: 'pure_server',
+      s7: 'password',
+      s8: 'vs_bots',
+      s10: 'force_respawn',
+      p268435704: 'frag_limit',
+      p268435705: 'time_limit',
+      p268435703: 'numbots',
+      p268435717: 'stock_mutators',
+      p1073741829: 'stock_mutators'
+    }
+  }
+
+  /** @override */
+  getOptionsDefaults (outOptions) {
+    super.getOptionsDefaults(outOptions)
+    const defaults = {
+      usePattern: false,
+      includeAll: false,
+      includeFlat: false,
+      includeLegacy: false,
+      includeNull: true
+    }
+    Object.assign(outOptions, defaults)
   }
 
   /** @override */
@@ -573,16 +578,27 @@ export class lan extends CoreLAN {
 
     // manually transform serialized localized properties into known structure
     const propsLocalized = state.raw.LocalizedProperties?.reduce((acc, prop) => {
-      acc[`s${prop.Id}`] = prop.ValueIndex // TOOD: find actual value
+      acc[`s${prop.Id}`] = prop.ValueIndex
       return acc
     }, {})
 
+    // translate properties using pattern resolver
+    const stateRaw = { ...state.raw, ...props, ...propsLocalized }
+    if (this.options.usePattern) {
+      this.settingsResolver.applyContextOverrides(stateRaw)
+
+      this.settingsResolver.applyLocalizedProperties(state, propsLocalized)
+      this.settingsResolver.applyProperties(state, props)
+    }
+
     // translate properties
-    state.raw = { ...state.raw, ...props, ...propsLocalized }
-    this.translate(state.raw, TRANSLATE_MAP)
+    state.raw = stateRaw
+    this.translate(state.raw, this.translateMap) // Note: Legacy handling of query values
 
     // Turn all that raw state into something useful
-    unrealengine3.staticPopulateProperties(state)
+    if (!this.options.usePattern || this.options.includeLegacy) {
+      unrealengine3.staticPopulateProperties(state)
+    }
 
     if (!this.debug) {
       delete state.raw.LocalizedProperties

@@ -1,5 +1,6 @@
 import gamespy3 from './gamespy3.js'
 import { lan as unrealengine3$lan } from './unrealengine3.js'
+import { GameSettingsCommonUT3 } from '../patterns/ut3pattern.js'
 
 export default class ut3 extends gamespy3 {
   async run (state) {
@@ -53,5 +54,8 @@ export class lan extends unrealengine3$lan {
     super()
     this.packetVersion = 5
     this.gameUniqueId = 0x4D5707DB
+
+    // create UT3 settings ressolver
+    this.settingsResolver = new GameSettingsCommonUT3()
   }
 }

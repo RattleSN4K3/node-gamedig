@@ -57,7 +57,10 @@ export default class Core extends EventEmitter {
   /**
    * Update options. Can be used to add/change/override/remove protocol-specific options
    */
-  updateOptionsDefaults () { }
+  updateOptionsDefaults () {
+    this.settingsResolver?.updateOptions?.(this.options)
+  }
+
   /**
    * Build/add list of options to override. Can be used to override protocol options
    */
